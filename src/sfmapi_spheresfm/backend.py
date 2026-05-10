@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -211,60 +210,6 @@ class SphereSfMBackend:
             command = action_id.removeprefix("spheresfm.colmap.")
             return self._run_generic_command(command, normalized)
         raise NotFoundError(f"Backend action {action_id!r} not found")
-
-    def extract_features(self, **_: Any) -> dict:
-        raise self._unsupported("features.extract", "Use spheresfm.colmap.feature_extractor")
-
-    def match(self, **_: Any) -> dict:
-        raise self._unsupported("matches.exhaustive", "Use spheresfm.colmap.*_matcher")
-
-    def verify_matches(self, **_: Any) -> dict:
-        raise self._unsupported("matches.verify", "Use SphereSfM matcher actions")
-
-    def read_keypoints(self, **_: Any) -> tuple[list[list[float]], bytes, int]:
-        raise self._unsupported("observations.by_image", "SphereSfM does not expose keypoints")
-
-    def iter_two_view_geometries(self, **_: Any) -> Iterable[tuple[int, int, Any]]:
-        raise self._unsupported("matches.verify", "SphereSfM does not expose pair geometry")
-
-    def iter_correspondences(self, **_: Any) -> Iterable[tuple[int, int, Any]]:
-        raise self._unsupported("matches.exhaustive", "SphereSfM does not expose raw matches")
-
-    def run_mapping(self, **_: Any) -> tuple[list[dict], list[Any]]:
-        raise self._unsupported("map.incremental", "Use spheresfm.reconstructPanoramaFolder")
-
-    def bundle_adjustment(self, **_: Any) -> dict:
-        raise self._unsupported("ba.standard", "Use spheresfm.colmap.bundle_adjuster")
-
-    def triangulate(self, **_: Any) -> dict:
-        raise self._unsupported("triangulate.retri", "Use spheresfm.colmap.point_triangulator")
-
-    def relocalize(self, **_: Any) -> dict:
-        raise self._unsupported("relocalize.images", "Use spheresfm.colmap.image_registrator")
-
-    def pose_graph_optimize(self, **_: Any) -> dict:
-        raise self._unsupported("pgo.optimize")
-
-    def export(self, **_: Any) -> dict:
-        raise self._unsupported("export.colmap_text", "Use spheresfm.colmap.model_converter")
-
-    def convert_spherical_to_cubemap(self, **_: Any) -> dict:
-        raise self._unsupported("spherical.to_cubemap", "Use spheresfm.convertToCubemap")
-
-    def render_spherical_cubemap_images(self, **_: Any) -> dict:
-        raise self._unsupported("spherical.render_cubemap", "Use spheresfm.convertToCubemap")
-
-    def build_vlad_index(self, **_: Any) -> tuple[list[str], Any]:
-        raise self._unsupported("similarity.vlad", "Use spheresfm.colmap.vocab_tree_builder")
-
-    def localize_from_memory(self, **_: Any) -> dict:
-        raise self._unsupported("localize.from_memory")
-
-    def apply_sim3(self, **_: Any) -> dict:
-        raise self._unsupported("georegister.sim3", "Use spheresfm.colmap.model_aligner")
-
-    def read_reconstruction(self, path: Path) -> Any:
-        raise self._unsupported("import.colmap", f"Use sfmapi import tools for model path: {path}")
 
     def _find_executable(self) -> Path | None:
         if self._executable_override is not None:
@@ -684,9 +629,6 @@ class SphereSfMBackend:
             progress.phase_progress(f"spheresfm.{phase}", current=current, total=total)
         except Exception:
             return
-
-    def _unsupported(self, capability: str, reason: str = "") -> CapabilityUnavailableError:
-        return CapabilityUnavailableError(capability=capability, reason=reason)
 
     def _stringify(self, value: Any) -> str:
         if isinstance(value, bool):

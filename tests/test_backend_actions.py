@@ -32,9 +32,13 @@ def test_action_catalog_exposes_spheresfm_actions(tmp_path: Path) -> None:
 
 def test_backend_contract_passes(tmp_path: Path) -> None:
     pytest.importorskip("app.adapters.backend_contract")
+    from app.adapters.backend import Backend, SfmBackend
     from app.adapters.backend_contract import assert_backend_contract
 
-    assert_backend_contract(SphereSfMBackend(_fake_colmap(tmp_path / "colmap.exe")))
+    backend = SphereSfMBackend(_fake_colmap(tmp_path / "colmap.exe"))
+    assert isinstance(backend, Backend)
+    assert not isinstance(backend, SfmBackend)
+    assert_backend_contract(backend)
 
 
 def test_validate_rejects_bad_matching_mode(tmp_path: Path) -> None:
