@@ -138,7 +138,7 @@ def configure_spheresfm_environment(
 
 class SphereSfMBackend:
     name = "spheresfm"
-    version = "0.1.0"
+    version = "0.2.0"
     vendor = "SphereSfM"
 
     def __init__(self, executable: str | Path | None = None) -> None:
