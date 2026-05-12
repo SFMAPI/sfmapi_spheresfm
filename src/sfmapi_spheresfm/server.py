@@ -17,8 +17,7 @@ from sfmapi_spheresfm.plugin import plugin
 
 configure_spheresfm_environment(validate=bool(os.environ.get("SFMAPI_SPHERESFM_EXECUTABLE")))
 
-from app.adapters.registry import register_backend
-from app.main import create_app
+from sfmapi.runtime import create_app, register_backend
 
 plugin.register(register_backend)
 
