@@ -71,3 +71,10 @@ uv run ruff check src tests
 
 The default tests mock subprocess execution and do not require a built SphereSfM binary.
 
+## License
+
+The sfmapi wrapper code is licensed under `AGPL-3.0-or-later`; see `LICENSE`.
+Upstream SphereSfM is included as a submodule under `third_party/spheresfm` and
+remains `BSD-3-Clause`; see `LICENSES/SphereSfM-BSD-3-Clause.txt` and
+`THIRD_PARTY_NOTICES.md`. SphereSfM is COLMAP-derived and includes additional
+upstream third-party code; review upstream notices before distributing binaries.
