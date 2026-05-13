@@ -37,7 +37,7 @@ class PluginManifestDict(TypedDict):
 
 manifest: PluginManifestDict = {
     "plugin_id": "spheresfm",
-    "display_name": "SphereSFM",
+    "display_name": "SphereSfM",
     "description": "Backend plugin for spherical Structure-from-Motion workflows.",
     "package_name": "sfmapi-spheresfm",
     "github_url": "https://github.com/SFMAPI/sfmapi_spheresfm.git",
@@ -45,7 +45,7 @@ manifest: PluginManifestDict = {
     "providers": [
         {
             "provider_id": "spheresfm",
-            "display_name": "SphereSFM",
+            "display_name": "SphereSfM",
             "capabilities": [
                 "features.extract.sift",
                 "pairs.exhaustive",
@@ -89,9 +89,9 @@ manifest: PluginManifestDict = {
     "licenses": [{"name": "AGPL-3.0-or-later"}],
     "upstream_projects": [
         {
-            "name": "SphereSFM",
-            "url": "https://github.com/SFMAPI/SphereSFM",
-            "license": "Upstream license",
+            "name": "SphereSfM",
+            "url": "https://github.com/json87/SphereSfM",
+            "license": "BSD-3-Clause",
         }
     ],
     "compatibility": {
