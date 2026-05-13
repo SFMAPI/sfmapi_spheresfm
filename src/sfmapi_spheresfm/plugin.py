@@ -68,8 +68,8 @@ manifest: PluginManifestDict = {
         "docker": {},
         "external_tool": {
             "executable_names": ["spheresfm"],
-            "env_vars": ["SPHERESFM_EXE"],
-            "version_args": ["--version"],
+            "env_vars": ["SFMAPI_SPHERESFM_EXECUTABLE", "SPHERESFM_EXE"],
+            "version_args": ["help"],
         },
     },
     "capabilities": [
