@@ -4,7 +4,7 @@ import tomllib
 from importlib import import_module
 from pathlib import Path
 
-from sfmapi_spheresfm.backend import SphereSfMBackend
+from sfmapi_spheresfm.backend import SPHERESFM_CAPABILITIES, SphereSfMBackend
 from sfmapi_spheresfm.plugin import get_plugin_manifest, plugin
 
 
@@ -42,3 +42,24 @@ def test_plugin_registers_backend_factory() -> None:
     factory = registered["spheresfm"]
     assert callable(factory)
     assert isinstance(factory(), SphereSfMBackend)
+
+
+def test_manifest_capabilities_match_backend(tmp_path: Path) -> None:
+    # The manifest must not advertise portable capabilities the backend
+    # cannot actually back with a wrapper method. SphereSfM is a COLMAP
+    # fork, so the manifest mirrors the full SPHERESFM_CAPABILITIES set
+    # (features, every matcher, all three mapping kinds, BA incl. rig,
+    # triangulation, relocalization, merge, export, georegistration).
+    manifest = get_plugin_manifest()
+    expected = set(SPHERESFM_CAPABILITIES)
+    assert set(manifest["capabilities"]) == expected
+    assert set(manifest["providers"][0]["capabilities"]) == expected
+
+    fake_exe = tmp_path / "colmap.exe"
+    fake_exe.write_text("", encoding="utf-8")
+    backend = SphereSfMBackend(fake_exe)
+    assert backend.capabilities() == expected
+
+    # Declared artifact-contract ids must resolve to real contracts.
+    contract_ids = {row["contract_id"] for row in backend.list_backend_artifact_contracts()}
+    assert set(manifest["artifact_contracts"]) == contract_ids

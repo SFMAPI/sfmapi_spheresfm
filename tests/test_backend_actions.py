@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from sfmapi_spheresfm.backend import SPHERESFM_COMMANDS, SphereSfMBackend
+from sfmapi_spheresfm.backend import (
+    SPHERESFM_CAPABILITIES,
+    SPHERESFM_COMMANDS,
+    SphereSfMBackend,
+)
 
 
 def _fake_colmap(path: Path) -> Path:
@@ -27,15 +31,43 @@ def test_action_catalog_exposes_spheresfm_actions(tmp_path: Path) -> None:
     assert len([action for action in action_ids if action.startswith("spheresfm.colmap.")]) == len(
         SPHERESFM_COMMANDS
     )
+    # SphereSfM backs the full COLMAP-fork sparse pipeline as portable
+    # capabilities with real wrapper methods; the action catalog
+    # continues to expose every COLMAP-fork verb separately.
+    assert backend.capabilities() == set(SPHERESFM_CAPABILITIES)
+
+
+def test_capabilities_empty_without_executable(tmp_path: Path) -> None:
+    # A deployment that cannot resolve the SphereSfM executable must not
+    # advertise capabilities it cannot actually run.
+    backend = SphereSfMBackend(tmp_path / "missing-colmap.exe")
     assert backend.capabilities() == set()
 
 
 def test_backend_contract_passes(tmp_path: Path) -> None:
     pytest.importorskip("sfmapi.backends")
-    from sfmapi.backends import Backend, SfmBackend, assert_backend_contract
+    from sfmapi.backends import (
+        Backend,
+        MappingBackend,
+        SfmBackend,
+        assert_backend_contract,
+        has_backend_method,
+    )
 
     backend = SphereSfMBackend(_fake_colmap(tmp_path / "colmap.exe"))
     assert isinstance(backend, Backend)
+    # SphereSfM fully satisfies the portable mapping protocol (run_mapping).
+    assert isinstance(backend, MappingBackend)
+    # It implements the feature/match and spherical stage methods the
+    # manifest advertises, but not the *whole* FeatureBackend protocol
+    # (no standalone verify_matches — SphereSfM verifies inline) nor the
+    # whole SphericalBackend protocol, so check method presence directly.
+    assert has_backend_method(backend, "extract_features")
+    assert has_backend_method(backend, "match")
+    assert has_backend_method(backend, "convert_spherical_to_cubemap")
+    assert not has_backend_method(backend, "verify_matches")
+    # SphereSfM is still not a full SfmBackend (no observation readers,
+    # refinement, export, retrieval, or localization surface).
     assert not isinstance(backend, SfmBackend)
     assert_backend_contract(backend)
 

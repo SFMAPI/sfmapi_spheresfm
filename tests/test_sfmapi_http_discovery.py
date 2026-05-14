@@ -41,12 +41,18 @@ def test_sfmapi_http_discovery_surfaces_spheresfm_actions(
         capabilities = client.get("/v1/capabilities").json()
         assert capabilities["backend"]["name"] == "spheresfm"
         assert capabilities["features"]["backend.actions"] is True
-        assert capabilities["features"]["backend.config_schemas"] is False
+        # SphereSfM now ships portable stage capabilities + their option
+        # schemas + artifact contracts.
+        assert capabilities["features"]["backend.config_schemas"] is True
+        assert capabilities["features"]["backend.artifact_contracts"] is True
+        assert capabilities["features"]["features.extract.sift"] is True
+        assert capabilities["features"]["map.spherical"] is True
+        assert capabilities["features"]["projection.cubemap_rig"] is True
 
         backend = client.get("/v1/backend").json()
         assert backend["name"] == "spheresfm"
         assert backend["action_count"] > 0
-        assert backend["config_schema_count"] == 0
+        assert backend["config_schema_count"] == 3
 
         actions = client.get("/v1/backend/actions?include_schemas=true&page_size=100").json()[
             "items"
@@ -62,4 +68,19 @@ def test_sfmapi_http_discovery_surfaces_spheresfm_actions(
         )
         assert "matching_mode" in reconstruct["input_schema"]["properties"]
 
-        assert client.get("/v1/backend/config-schemas").json()["items"] == []
+        config_ids = {
+            row["config_id"] for row in client.get("/v1/backend/config-schemas").json()["items"]
+        }
+        assert config_ids == {
+            "spheresfm.features.sift",
+            "spheresfm.pairs.exhaustive",
+            "spheresfm.mapping.spherical",
+        }
+        contract_ids = {
+            row["contract_id"]
+            for row in client.get("/v1/backend/artifact-contracts").json()["items"]
+        }
+        assert contract_ids == {
+            "spheresfm.matches.database",
+            "spheresfm.reconstruction.spherical",
+        }

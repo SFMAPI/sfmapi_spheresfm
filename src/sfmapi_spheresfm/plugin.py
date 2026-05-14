@@ -46,13 +46,36 @@ manifest: PluginManifestDict = {
         {
             "provider_id": "spheresfm",
             "display_name": "SphereSfM",
+            # Portable capabilities backed by real wrapper methods on
+            # SphereSfMBackend. SphereSfM is a COLMAP fork, so the full
+            # sparse pipeline is wired: feature extraction, every
+            # pair-selection matcher, incremental / hierarchical /
+            # spherical mapping, standard + rig bundle adjustment,
+            # re-triangulation, image registration, model merging,
+            # export, and Sim(3) georegistration. SphereSfM's matchers
+            # run geometric verification inline (no standalone verify
+            # command), so ``matches.verify`` is deliberately not
+            # advertised; nor is any image-only equirect transform.
             "capabilities": [
+                "ba.rig",
+                "ba.standard",
+                "export.colmap_bin",
+                "export.colmap_text",
+                "export.nvm",
+                "export.ply",
                 "features.extract.sift",
-                "pairs.exhaustive",
-                "matches.verify",
+                "georegister.sim3",
+                "map.hierarchical",
+                "map.incremental",
                 "map.spherical",
-                "projection.equirectangular_to_cubemap",
-                "projection.equirectangular_to_perspective",
+                "pairs.exhaustive",
+                "pairs.sequential",
+                "pairs.spatial",
+                "pairs.vocabtree",
+                "projection.cubemap_rig",
+                "recon.merge",
+                "relocalize.images",
+                "triangulate.retri",
             ],
             "backend_actions": ["spheresfm.*"],
             "priority_hint": 15,
@@ -73,18 +96,31 @@ manifest: PluginManifestDict = {
         },
     },
     "capabilities": [
+        "ba.rig",
+        "ba.standard",
+        "export.colmap_bin",
+        "export.colmap_text",
+        "export.nvm",
+        "export.ply",
         "features.extract.sift",
-        "pairs.exhaustive",
-        "matches.verify",
+        "georegister.sim3",
+        "map.hierarchical",
+        "map.incremental",
         "map.spherical",
-        "projection.equirectangular_to_cubemap",
-        "projection.equirectangular_to_perspective",
+        "pairs.exhaustive",
+        "pairs.sequential",
+        "pairs.spatial",
+        "pairs.vocabtree",
+        "projection.cubemap_rig",
+        "recon.merge",
+        "relocalize.images",
+        "triangulate.retri",
     ],
     "backend_actions": ["spheresfm.*"],
     "config_schemas": ["spheresfm.*"],
     "artifact_contracts": [
-        "sfmapi.spherical_dataset",
-        "sfmapi.reconstruction",
+        "spheresfm.matches.database",
+        "spheresfm.reconstruction.spherical",
     ],
     "licenses": [{"name": "AGPL-3.0-or-later"}],
     "upstream_projects": [
@@ -113,10 +149,13 @@ def get_plugin_manifest() -> PluginManifestDict:
     return manifest
 
 
-def register(
-    register_backend: Callable[[str, Callable[[], SphereSfMBackend]], None],
-) -> None:
-    register_backend("spheresfm", backend_factory)
+def register(register_backend: Callable[..., None]) -> None:
+    provider_ids = [str(provider["provider_id"]) for provider in manifest["providers"]]
+    try:
+        register_backend("spheresfm", backend_factory, providers=provider_ids)
+    except TypeError:
+        # Older sfmapi without ``providers=`` kwarg on the registrar.
+        register_backend("spheresfm", backend_factory)
 
 
 @dataclass(frozen=True)
@@ -128,11 +167,13 @@ class SfmapiBackendPlugin:
     def get_plugin_manifest(self) -> PluginManifestDict:
         return self.manifest
 
-    def register(
-        self,
-        register_backend: Callable[[str, Callable[[], SphereSfMBackend]], None],
-    ) -> None:
-        register_backend(self.backend_name, self.backend_factory)
+    def register(self, register_backend: Callable[..., None]) -> None:
+        provider_ids = [str(provider["provider_id"]) for provider in self.manifest["providers"]]
+        try:
+            register_backend(self.backend_name, self.backend_factory, providers=provider_ids)
+        except TypeError:
+            # Older sfmapi without ``providers=`` kwarg on the registrar.
+            register_backend(self.backend_name, self.backend_factory)
 
 
 plugin = SfmapiBackendPlugin(
