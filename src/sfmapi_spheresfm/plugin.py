@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any, TypedDict
+
+# `SfmapiBackendPlugin` is the per-plugin name this module has always
+# exported; alias the canonical sfmapi.backends.Plugin so downstream
+# consumers (and the existing __all__) keep working.
+from sfmapi.backends import Plugin as SfmapiBackendPlugin
 
 from .backend import SphereSfMBackend
 
@@ -88,7 +92,7 @@ manifest: PluginManifestDict = {
             "ref": "main",
             "package": "sfmapi-spheresfm",
         },
-        "docker": {},
+        "docker": None,
         "external_tool": {
             "executable_names": ["spheresfm"],
             "env_vars": ["SFMAPI_SPHERESFM_EXECUTABLE", "SPHERESFM_EXE"],
@@ -156,24 +160,6 @@ def register(register_backend: Callable[..., None]) -> None:
     except TypeError:
         # Older sfmapi without ``providers=`` kwarg on the registrar.
         register_backend("spheresfm", backend_factory)
-
-
-@dataclass(frozen=True)
-class SfmapiBackendPlugin:
-    manifest: PluginManifestDict
-    backend_name: str
-    backend_factory: Callable[[], SphereSfMBackend]
-
-    def get_plugin_manifest(self) -> PluginManifestDict:
-        return self.manifest
-
-    def register(self, register_backend: Callable[..., None]) -> None:
-        provider_ids = [str(provider["provider_id"]) for provider in self.manifest["providers"]]
-        try:
-            register_backend(self.backend_name, self.backend_factory, providers=provider_ids)
-        except TypeError:
-            # Older sfmapi without ``providers=`` kwarg on the registrar.
-            register_backend(self.backend_name, self.backend_factory)
 
 
 plugin = SfmapiBackendPlugin(
