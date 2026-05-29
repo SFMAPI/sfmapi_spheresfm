@@ -1,6 +1,6 @@
 # sfmapi SphereSfM backend
 
-This package runs sfmapi with a SphereSfM-backed action catalog. The wrapper is AGPL-3.0-or-later; the upstream SphereSfM project is included as a git submodule under `third_party/spheresfm` and keeps its own BSD-3-Clause license.
+This package runs sfmapi with a SphereSfM-backed action catalog. The wrapper is Apache-2.0; the upstream SphereSfM project is included as a git submodule under `third_party/spheresfm` and keeps its own BSD-3-Clause license.
 
 SphereSfM is a COLMAP-derived spherical-image SfM engine. The sfmapi adapter is Python-based, but real work is executed through the SphereSfM `colmap` executable built from the upstream submodule.
 
@@ -73,7 +73,7 @@ The default tests mock subprocess execution and do not require a built SphereSfM
 
 ## License
 
-The sfmapi wrapper code is licensed under `AGPL-3.0-or-later`; see `LICENSE`.
+The sfmapi wrapper code is licensed under `Apache-2.0`; see `LICENSE`.
 Upstream SphereSfM is included as a submodule under `third_party/spheresfm` and
 remains `BSD-3-Clause`; see `LICENSES/SphereSfM-BSD-3-Clause.txt` and
 `THIRD_PARTY_NOTICES.md`. SphereSfM is COLMAP-derived and includes additional

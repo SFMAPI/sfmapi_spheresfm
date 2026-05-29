@@ -12,5 +12,5 @@ SphereSfM is derived from COLMAP and includes additional third-party code in its
 
 ## sfmapi
 
-This wrapper package is licensed AGPL-3.0-or-later and depends on sfmapi's public backend adapter contracts.
+This wrapper package is licensed Apache-2.0 and depends on sfmapi's public backend adapter contracts.
 

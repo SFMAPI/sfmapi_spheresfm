@@ -3,7 +3,7 @@ name = "sfmapi-spheresfm"
 version = "0.0.1"
 description = "sfmapi backend-action wrapper for SphereSfM"
 readme = "README.md"
-license = { text = "AGPL-3.0-or-later" }
+license = { text = "Apache-2.0" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "sfmapi>=0.0.1,<0.1",

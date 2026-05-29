@@ -126,7 +126,7 @@ manifest: PluginManifestDict = {
         "spheresfm.matches.database",
         "spheresfm.reconstruction.spherical",
     ],
-    "licenses": [{"name": "AGPL-3.0-or-later"}],
+    "licenses": [{"name": "Apache-2.0"}],
     "upstream_projects": [
         {
             "name": "SphereSfM",
