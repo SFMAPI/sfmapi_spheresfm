@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **MOVED.** Development continued and now lives in the SceneAPI org as part of the merged mapping family: <https://github.com/SceneAPI/SceneMap>. This repository holds the final sfmapi-era state for history and will be archived.
+
 # sfmapi SphereSfM backend
 
 This package runs sfmapi with a SphereSfM-backed action catalog. The wrapper is Apache-2.0; the upstream SphereSfM project is included as a git submodule under `third_party/spheresfm` and keeps its own BSD-3-Clause license.
