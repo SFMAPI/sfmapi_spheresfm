@@ -72,6 +72,19 @@ SPHERESFM_COMMANDS: tuple[str, ...] = (
 SPHERESFM_COMMAND_SET = frozenset(SPHERESFM_COMMANDS)
 READ_ONLY_COMMANDS = {"help", "model_analyzer", "model_comparer"}
 MATCHING_MODES = {"spatial", "vocabtree", "exhaustive", "sequential"}
+_STAGE_METADATA_KEYS = {
+    "backend_options",
+    "input_artifacts",
+    "portable",
+    "provider",
+    "max_num_features",
+    "seed",
+    "sift",
+    "strategy",
+    "type",
+    "use_gpu",
+    "version",
+}
 
 # Default SPHERE camera parameters used by SphereSfM's documented panorama
 # pipeline (focal scale + principal point for a 2:1 equirectangular image).
@@ -148,6 +161,37 @@ def _expand_path(value: str | Path) -> Path:
     return Path(os.path.expandvars(str(value).strip().strip('"'))).expanduser()
 
 
+def _plugin_cache_root(plugin_id: str) -> Path:
+    override = os.environ.get("SFMAPI_PLUGIN_CACHE")
+    if override:
+        return _expand_path(override) / plugin_id
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+        return Path(base) / "sfmapi" / "plugins" / plugin_id
+    base = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
+    return Path(base) / "sfmapi" / "plugins" / plugin_id
+
+
+def _cache_executable_candidates() -> list[Path]:
+    cache = _plugin_cache_root("spheresfm")
+    names = ["colmap.exe", "colmap"] if os.name == "nt" else ["colmap", "colmap.exe"]
+    candidates = [cache / "current" / name for name in names]
+    if cache.exists():
+        for child in cache.iterdir():
+            if child.is_dir() and child.name != "current":
+                candidates.extend(child / name for name in names)
+    return candidates
+
+
+def _cli_options(options: dict[str, Any] | None) -> dict[str, Any]:
+    """Drop sfmapi routing/envelope fields before building CLI flags."""
+    return {
+        key: value
+        for key, value in dict(options or {}).items()
+        if key not in _STAGE_METADATA_KEYS
+    }
+
+
 def _default_executable_candidates() -> list[Path]:
     names = ["colmap.exe", "colmap"] if os.name == "nt" else ["colmap", "colmap.exe"]
     relative_dirs = [
@@ -160,7 +204,7 @@ def _default_executable_candidates() -> list[Path]:
         DEFAULT_SPHERESFM_ROOT / relative_dir / name
         for relative_dir in relative_dirs
         for name in names
-    ]
+    ] + _cache_executable_candidates()
 
 
 def resolve_spheresfm_executable(value: str | Path | None) -> Path | None:
@@ -267,7 +311,12 @@ class SphereSfMBackend:
         database_path = Path(database_path)
         image_root = Path(image_root)
         database_path.parent.mkdir(parents=True, exist_ok=True)
-        opts = dict(options or {})
+        raw_options = dict(options or {})
+        opts = _cli_options(raw_options)
+        if raw_options.get("use_gpu") is not None:
+            opts["SiftExtraction.use_gpu"] = int(bool(raw_options["use_gpu"]))
+        if raw_options.get("max_num_features") is not None:
+            opts["SiftExtraction.max_num_features"] = int(raw_options["max_num_features"])
 
         feature_options: dict[str, Any] = {
             "database_path": database_path,
@@ -327,7 +376,7 @@ class SphereSfMBackend:
             )
         self._require_executable()
         match_options: dict[str, Any] = {"database_path": Path(database_path)}
-        match_options.update(dict(options or {}))
+        match_options.update(_cli_options(options))
 
         self._progress(progress, "matching", 0, 1)
         result = self._run_colmap(command, options=match_options)
@@ -1039,6 +1088,12 @@ class SphereSfMBackend:
             commands[1][1]["ImageReader.camera_mask_path"] = inputs["camera_mask_path"]
         if inputs.get("pose_path"):
             commands[1][1]["ImageReader.pose_path"] = inputs["pose_path"]
+        if inputs.get("use_gpu") is not None:
+            use_gpu = int(bool(inputs["use_gpu"]))
+            commands[1][1]["SiftExtraction.use_gpu"] = use_gpu
+            commands[2][1]["SiftMatching.use_gpu"] = use_gpu
+        if inputs.get("max_num_features") is not None:
+            commands[1][1]["SiftExtraction.max_num_features"] = int(inputs["max_num_features"])
 
         results: list[dict[str, Any]] = []
         total = len(commands)
@@ -1246,6 +1301,8 @@ class SphereSfMBackend:
                 "sparse_path": {"type": "string"},
                 "camera_params": {"type": "string", "default": "1,3520,1760"},
                 "single_camera": {"type": "boolean", "default": True},
+                "use_gpu": {"type": "boolean", "default": True},
+                "max_num_features": {"type": "integer", "default": 8192},
                 "camera_mask_path": {"type": "string"},
                 "pose_path": {"type": "string"},
                 "matching_mode": {

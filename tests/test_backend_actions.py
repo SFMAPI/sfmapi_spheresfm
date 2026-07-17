@@ -97,6 +97,10 @@ def test_reconstruct_panorama_folder_builds_spherical_sequence(
     image_path.mkdir()
     backend = SphereSfMBackend(exe)
     captured: list[list[str]] = []
+    action = backend.get_backend_action("spheresfm.reconstructPanoramaFolder")
+    properties = action["input_schema"]["properties"]
+    assert properties["use_gpu"]["default"] is True
+    assert properties["max_num_features"]["default"] == 8192
 
     def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         captured.append(args)
@@ -111,6 +115,8 @@ def test_reconstruct_panorama_folder_builds_spherical_sequence(
             "workspace_path": str(tmp_path / "workspace"),
             "camera_params": "1,3520,1760",
             "matching_mode": "spatial",
+            "use_gpu": False,
+            "max_num_features": 2048,
         },
     )
 
@@ -119,6 +125,13 @@ def test_reconstruct_panorama_folder_builds_spherical_sequence(
     feature_args = captured[1]
     assert "--ImageReader.camera_model" in feature_args
     assert "SPHERE" in feature_args
+    assert "--SiftExtraction.use_gpu" in feature_args
+    assert "0" in feature_args
+    assert "--SiftExtraction.max_num_features" in feature_args
+    assert "2048" in feature_args
+    matcher_args = captured[2]
+    assert "--SiftMatching.use_gpu" in matcher_args
+    assert "0" in matcher_args
     mapper_args = captured[3]
     assert "--Mapper.sphere_camera" in mapper_args
     assert "1" in mapper_args

@@ -20,6 +20,7 @@ class ProviderManifestDict(TypedDict):
 
 
 class PluginManifestDict(TypedDict):
+    schema_version: int
     plugin_id: str
     display_name: str
     description: str
@@ -40,6 +41,7 @@ class PluginManifestDict(TypedDict):
 
 
 manifest: PluginManifestDict = {
+    "schema_version": 1,
     "plugin_id": "spheresfm",
     "display_name": "SphereSfM",
     "description": "Backend plugin for spherical Structure-from-Motion workflows.",
